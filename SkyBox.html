@@ -1,75 +1,150 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+  <head>
+
+    <title></title>
+  </head>
+  <style>
+    body {margin: 0;}
+    canvas {width: 100%; height: 100%;}
+  </style>
+
+
+  <body>
+    <html>
     <head>
-		<title>three.js - pointerlock controls</title>
-		<meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="css/main.css">
-	
+      <title>Simple Geometry Test</title>
     </head>
+
+    <style>
+    body {margin: 0;}
+    canvas {width: 100%; height: 100%;}
+    </style>
+
     <body>
-        <script src="js/three.js"></script>
-        <script src="js/OrbitControls.js"></script>
+      <!--include the three.js library-->
+     <script src="js/three.js"> </script>
+     <!--and the trackball code-->
+     <script src="js/OrbitControls.js"> </script>
 
-        <!-- <script src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/101/three.min.js"></script>
-        <script src = "https://threejs.org/examples/js/controls/OrbitControls.js"></script> -->
+      <script>
 
-        <!-- <script src="js/PointerLockControls.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/102/three.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script> -->
-        
+      //create the scene
+      var scene = new THREE.Scene( );
+      var ratio = window.innerWidth/window.innerHeight;
+      //create the perspective camera
+      //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
+      var camera = new THREE.PerspectiveCamera(45,ratio,0.1,1000);
+
+      //set the camera position
+      camera.position.set(0,0,15);
+      // and the direction
+  	  camera.lookAt(0,0,1);
+
+      //create the webgl renderer
+      var renderer = new THREE.WebGLRenderer( );
+
+      //set the size of the rendering window
+      renderer.setSize(window.innerWidth,window.innerHeight);
+
+      //add the renderer to the current document
+      document.body.appendChild(renderer.domElement );
+
+      //create the material of the cube (basic material)
+
+//-------------------------------------------------------------------------------------------
+      // var material_cube = new THREE.MeshLambertMaterial();
 
 
-        <script>
+      //set the color of the cube
+      // material_cube.color=  new THREE.Color(1,1,1);
+      //
+      // var sky_texture = new THREE.TextureLoader().load('img/text.png');
+      // material_cube.map= stone_texture;
+      //
+      // //then set the renderer to wireframe
+      // material_cube.wireframe=false;
+      //
+      // //create the mesh of a cube
+      // var geometry_cube = new THREE.BoxGeometry(5,5,5);
+      // var cube_mesh = new THREE.Mesh(geometry_cube,material_cube);
+      // cube_mesh.position.x-=5;
+      // scene.add(cube_mesh);
+//----------------------------------------------------------------------------------------------
 
-            var scene, camera, renderer; 
 
-            
-                scene = new THREE.Scene(); 
-            
-                camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 45, 30000);
-                camera.position.set(-900, -200, -900); 
+var geometry = new THREE.BoxGeometry(100,100,100);
+var cubeMaterials =
+[
+  new THREE.MeshBasicMaterial({map: new THREE.TextureLoader().load('img/sky_ft.png'), side: THREE.DoubleSide}),
+  new THREE.MeshBasicMaterial({map: new THREE.TextureLoader().load('img/sky_bk.png'), side: THREE.DoubleSide}),
+  new THREE.MeshBasicMaterial({map: new THREE.TextureLoader().load('img/sky_up.png'), side: THREE.DoubleSide}),
+  new THREE.MeshBasicMaterial({map: new THREE.TextureLoader().load('img/sky_dn.png'), side: THREE.DoubleSide}),
+  new THREE.MeshBasicMaterial({map: new THREE.TextureLoader().load('img/sky_rt.png'), side: THREE.DoubleSide}),
+  new THREE.MeshBasicMaterial({map: new THREE.TextureLoader().load('img/sky_lf.png'), side: THREE.DoubleSide})
 
-                renderer = new THREE.WebGLRenderer( { antialias: true } ); 
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                document.body.appendChild(renderer.domElement); 
+];
 
-                controls = new THREE.OrbitControls( camera );
-                controls.addEventListener('change', renderer);
-                controls.minDistance = 500;
-                controls.maxDistance = 1500;
+var material = new THREE.MeshFaceMaterial(cubeMaterials);
+var cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
 
-                let materialArray = []; 
-                let texture_ft = new THREE.TextureLoader().load('images/sky_ft.png'); 
-                let texture_bk = new THREE.TextureLoader().load('images/sky_bk.png'); 
-                let texture_up = new THREE.TextureLoader().load('images/sky_up.png'); 
-                let texture_dn = new THREE.TextureLoader().load('images/sky_dn.png'); 
-                let texture_rt = new THREE.TextureLoader().load('images/sky_rt.png'); 
-                let texture_lf = new THREE.TextureLoader().load('images/sky_lf.png'); 
 
-                materialArray.push(new THREE.MeshBasicMaterial({map: texture_ft}));
-                materialArray.push(new THREE.MeshBasicMaterial({map: texture_bk}));
-                materialArray.push(new THREE.MeshBasicMaterial({map: texture_up}));
-                materialArray.push(new THREE.MeshBasicMaterial({map: texture_dn}));
-                materialArray.push(new THREE.MeshBasicMaterial({map: texture_rt}));
-                materialArray.push(new THREE.MeshBasicMaterial({map: texture_lf}));
-                
-                let skyboxGeo = new THREE.BoxGeometry(10000, 10000, 10000); 
-                let skybox = new THREE.Mesh(skyboxGeo, materialArray); 
-                scene.add(skybox); 
 
-                animate(); 
-            
 
-            function animate() {
-                renderer.render(scene, camera); 
-                requestAnimationFrame(animate); 
-            }
 
-         
-        </script>
-        
+    //////////////
+  	// CONTROLS //
+  	//////////////
+
+  	// move mouse and: left   click to rotate,
+  	//                 middle click to zoom,
+  	//                 right  click to pan
+    // add the new control and link to the current camera to transform its position
+
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
+    // controls.minDistance = 300;
+    // controls.maxDistance = 1100;
+
+   //then add ambient
+//---------------------------------------------------------------------------------------
+   // var cameralight = new THREE.PointLight( new THREE.Color(1,1,1), 1 );
+   // camera.add( cameralight );
+   // scene.add(camera);
+//--------------------------------------------------------------------------------------------
+
+
+    //final update loop
+    var MyUpdateLoop = function ( )
+    {
+      //call the render with the scene and the camera
+      renderer.render(scene,camera);
+
+      controls.update();
+
+      //finally perform a recoursive call to update again
+      //this must be called because the mouse change the camera position
+      requestAnimationFrame(MyUpdateLoop);
+
+    };
+
+    requestAnimationFrame(MyUpdateLoop);
+
+    //this fucntion is called when the window is resized
+    var MyResize = function ( )
+    {
+      var width = window.innerWidth;
+      var height = window.innerHeight;
+      renderer.setSize(width,height);
+      camera.aspects = width/height;
+      camera.updateProjectionMatrix();
+      renderer.render(scene,camera);
+    };
+
+    //link the resize of the window to the update of the camera
+    window.addEventListener( 'resize', MyResize);
+
+
+      </script>
     </body>
-    
-</html>
+  </html>
