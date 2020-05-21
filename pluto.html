@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<script src='js/three.min.js'></script>
+<script src='js/threex.planets.js'></script>
+<script src='js/threex.atmospherematerial.js'></script>
+<!-- include for threex.glowdatgui -->
+<script src='js/dat.gui.min.js'></script>
+<script src="js/threex.atmospheredatgui.js"></script>
+<body style='margin: 0px; background-color: #000000; overflow: hidden;'>
+
+  <script>
+//=============================== errors with atmospherematerial.js being read so pasted the contents here =================================================================
+    var THREEx = THREEx || {}
+
+    /**
+     * from http://stemkoski.blogspot.fr/2013/07/shaders-in-threejs-glow-and-halo.html
+     * @return {[type]} [description]
+     */
+    THREEx.createAtmosphereMaterial	= function(){
+    	var vertexShader	= [
+    		'varying vec3	vVertexWorldPosition;',
+    		'varying vec3	vVertexNormal;',
+
+    		'void main(){',
+    		'	vVertexNormal	= normalize(normalMatrix * normal);',
+
+    		'	vVertexWorldPosition	= (modelMatrix * vec4(position, 1.0)).xyz;',
+
+    		'	// set gl_Position',
+    		'	gl_Position	= projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+    		'}',
+
+    		].join('\n')
+    	var fragmentShader	= [
+    		'uniform vec3	glowColor;',
+    		'uniform float	coeficient;',
+    		'uniform float	power;',
+
+    		'varying vec3	vVertexNormal;',
+    		'varying vec3	vVertexWorldPosition;',
+
+    		'void main(){',
+    		'	vec3 worldCameraToVertex= vVertexWorldPosition - cameraPosition;',
+    		'	vec3 viewCameraToVertex	= (viewMatrix * vec4(worldCameraToVertex, 0.0)).xyz;',
+    		'	viewCameraToVertex	= normalize(viewCameraToVertex);',
+    		'	float intensity		= pow(coeficient + dot(vVertexNormal, viewCameraToVertex), power);',
+    		'	gl_FragColor		= vec4(glowColor, intensity);',
+    		'}',
+    	].join('\n')
+
+    	// create custom material from the shader code above
+    	//   that is within specially labeled script tags
+    	var material	= new THREE.ShaderMaterial({
+    		uniforms: {
+    			coeficient	: {
+    				type	: "f",
+    				value	: 1.0
+    			},
+    			power		: {
+    				type	: "f",
+    				value	: 2
+    			},
+    			glowColor	: {
+    				type	: "c",
+    				value	: new THREE.Color('pink')
+    			},
+    		},
+    		vertexShader	: vertexShader,
+    		fragmentShader	: fragmentShader,
+    		//blending	: THREE.AdditiveBlending,
+    		transparent	: true,
+    		depthWrite	: false,
+    	});
+    	return material
+    }
+
+//=============================================================================== end of atmospherematerial.js code =========================================================================================
+
+
+	var renderer	= new THREE.WebGLRenderer({
+		antialias	: true
+	});
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+	renderer.shadowMapEnabled	= true
+
+	var onRenderFcts= [];
+	var scene	= new THREE.Scene();
+	var camera	= new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 100 );
+	camera.position.z = 1;
+
+	var light	= new THREE.AmbientLight( 0x222222 )
+	scene.add( light )
+
+	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
+
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
+
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
+
+	light.shadowMapWidth	= 1024
+	light.shadowMapHeight	= 1024
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		added starfield							//
+	//////////////////////////////////////////////////////////////////////////////////
+
+	var starSphere	= THREEx.Planets.createStarfield()
+	scene.add(starSphere)
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		add an object and make it move					//
+	//////////////////////////////////////////////////////////////////////////////////
+
+	// var datGUI	= new dat.GUI()
+
+	var containerPluto = new THREE.Object3D()
+	containerPluto.rotateZ(-23.4 * Math.PI/180)
+	containerPluto.position.z	= 0
+	scene.add(containerPluto)
+
+
+	var plutoMesh	= THREEx.Planets.createPluto()
+  plutoMesh.receiveShadow	= true
+	plutoMesh.castShadow	= true
+	containerPluto.add(plutoMesh)
+	onRenderFcts.push(function(delta, now){
+		plutoMesh.rotation.y += 1/32 * delta;
+	})
+
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Camera Controls							//
+	//////////////////////////////////////////////////////////////////////////////////
+	var mouse	= {x : 0, y : 0}
+	document.addEventListener('mousemove', function(event){
+		mouse.x	= (event.clientX / window.innerWidth ) - 0.5
+		mouse.y	= (event.clientY / window.innerHeight) - 0.5
+	}, false)
+	onRenderFcts.push(function(delta, now){
+		camera.position.x += (mouse.x*5 - camera.position.x) * (delta*3)
+		camera.position.y += (mouse.y*5 - camera.position.y) * (delta*3)
+		camera.lookAt( scene.position )
+	})
+
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		render the scene						//
+	//////////////////////////////////////////////////////////////////////////////////
+	onRenderFcts.push(function(){
+		renderer.render( scene, camera );
+	})
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		loop runner							//
+	//////////////////////////////////////////////////////////////////////////////////
+	var lastTimeMsec= null
+	requestAnimationFrame(function animate(nowMsec){
+		// keep looping
+		requestAnimationFrame( animate );
+		// measure time
+		lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+		var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+		lastTimeMsec	= nowMsec
+		// call each update function
+		onRenderFcts.forEach(function(onRenderFct){
+			onRenderFct(deltaMsec/1000, nowMsec/1000)
+		})
+	})
+</script>
+</body>
