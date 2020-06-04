@@ -1,846 +1,789 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>three.js - pointerlock controls</title>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
-    />
-    <link rel="stylesheet" type="text/css" href="css/main.css" />
-  </head>
+<html>
+    <head>
+        <title>Planets and moons</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div id="webgl"></div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r11/Stats.min.js"></script>
 
-  <body>
-    <script src="js/three.js"></script>
-    <script>
-      "three.min.js";
+        <script src="js/three.js"></script>
+        <script src='js/PointerLockControls.js'></script>
 
+        <script src='js/threex.planets.js'></script>
+        <script src="js/dat.gui.min.js"></script>
 
-    </script>
-    <script src="js/PointerLockControls.js"></script>
-
-    <script id="vertexShader" type="x-shader/x-vertex">
-      		varying vec3 vNormal;
-      void main()
-      {
-          vNormal = normalize( normalMatrix * normal );
-          gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-      }
-    </script>
-
-    <!-- fragment shader a.k.a. pixel shader -->
-    <script id="fragmentShader" type="x-shader/x-vertex">
-      		varying vec3 vNormal;
-      void main()
-      {
-      	float intensity = pow( 0.7 - dot( vNormal, vec3( 0.0, 0.0, 1.0 ) ), 4.0 );
-          gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ) * intensity;
-      }
-    </script>
-
-    <script src="js/threex.planets.js"></script>
-    <script src="js/threex.atmospherematerial.js"></script>
-    <!-- include for threex.glowdatgui -->
-    <script src="js/dat.gui.min.js"></script>
-    <script src="js/threex.atmospheredatgui.js"></script>
-    <script src="js/PointerLockControls.js"></script>
-    <script src="js/OrbitControls.js"></script>
-    <script src="js/threex.planets.js"></script>
-
-    <div id="blocker">
-      <div id="instructions" class="fade-out">
-        <!-- (W, A, S, D = Move, MOUSE = Look around) -->
-      </div>
-    </div>
+    </body>
 
     <script>
-      var camera, scene, renderer, controls;
-
-      var Pos = new THREE.Vector3(0, 0, 200);
-
-      var Dir = new THREE.Vector3(0, 0, 1);
-      var ratio = window.innerWidth / window.innerHeight;
-
-      var controlsEnabled = true;
-
-      var moveForward = false;
-      var moveBackward = false;
-      var moveLeft = false;
-      var moveRight = false;
-
-      var stars = [];
-
-      var prevTime = performance.now();
-      var velocity = new THREE.Vector3();
-      var direction = new THREE.Vector3();
-      var color = new THREE.Color();
-
-      const clock = new THREE.Clock();
-      var speed = 1234;
-      var angle = 0;
-
-      var THREEx = THREEx || {};
-
-      var pointLight,
-        sun,
-        moon,
-        earth,
-        mars,
-        jupiter,
-        mercury,
-        neptune,
-        pluto,
-        saturn,
-        uranus,
-        venus,
-        earthOrbit,
-        ring,
-        controls,
-        scene,
-        camera,
-        renderer,
-        scene;
-      var planetSegments = 48;
-      var mercuryData = constructPlanetData(
-        360,
-        0.03,
-        10,
-        "mercury",
-        "solar_system/img/mercury.jpg",
-        0.2,
-        planetSegments
-      );
-      var venusData = constructPlanetData(
-        360,
-        0.03,
-        30,
-        "venus",
-        "solar_system/img/venus.jpg",
-        0.5,
-        planetSegments
-      );
-      var earthData = constructPlanetData(
-        365.2564,
-        0.015,
-        50,
-        "earth",
-        "solar_system/img/earth.jpg",
-        0.8,
-        planetSegments
-      );
-      var moonData = constructPlanetData(
-        29.5,
-        0.01,
-        2.8,
-        "moon",
-        "solar_system/img/moon.jpg",
-        0.4,
-        planetSegments
-      );
-      var marsData = constructPlanetData(
-        360,
-        0.03,
-        70,
-        "mars",
-        "solar_system/img/mars.jpg",
-        0.8,
-        planetSegments
-      );
-      var jupiterData = constructPlanetData(
-        360,
-        0.03,
-        90,
-        "jupiter",
-        "solar_system/img/jupiter.jpg",
-        2.5,
-        planetSegments
-      );
-      var saturnData = constructPlanetData(
-        360,
-        0.03,
-        110,
-        "saturn",
-        "solar_system/img/saturn.jpg",
-        2,
-        planetSegments
-      );
-      var uranusData = constructPlanetData(
-        360,
-        0.03,
-        130,
-        "uranus",
-        "solar_system/img/uranus.jpg",
-        1.25,
-        planetSegments
-      );
-      var neptuneData = constructPlanetData(
-        360,
-        0.03,
-        150,
-        "neptune",
-        "solar_system/img/neptune.jpg",
-        1.2,
-        planetSegments
-      );
-      var plutoData = constructPlanetData(
-        360,
-        0.03,
-        180,
-        "pluto",
-        "solar_system/img/pluto.jpg",
-        0.25,
-        planetSegments
-      );
-
-      var orbitData = { value: 200, runOrbit: true, runRotation: true };
-
-      function init() {
-        camera = new THREE.PerspectiveCamera(40, ratio, 0.00001, 1000);
-			camera.position.set(Pos.x, Pos.y, Pos.z);
-			camera.lookAt(Dir.x, Dir.y, Dir.z);
 
 
-        scene = new THREE.Scene();
+  // 'To actually be able to display anything with Three.js, we need three things:
+  // A scene, a camera, and a renderer so we can render the scene with the camera.'
+  // - https://threejs.org/docs/#Manual/Introduction/Creating_a_scene
 
-        controls = new THREE.PointerLockControls(camera);
-        controls.enabled = true;
-        scene.add(controls.getObject());
+  // setting up all the needed variables
+  var scene, camera, renderer, pointLight, sun, moon, earth, mars, jupiter, mercury, neptune, pluto, saturn, uranus, venus, earthOrbit, ring;
 
-        var onRenderFcts = [];
 
-        var onKeyDown = function (event) {
-          switch (event.keyCode) {
-            case 38: // up
-            case 87: // w
-              moveForward = true;
-              break;
+  var planetSegments = 48;
+  var mercuryData = constructPlanetData(360, 0.030, 47.9, "mercury", "img/mercury.jpg", 0.2, planetSegments);
+  var venusData = constructPlanetData(360, 0.030, 98.2, "venus", "img/venus.jpg", 0.5, planetSegments);
+  var earthData = constructPlanetData(365.2564, 0.015, 109.6, "earth", "img/earth.jpg", 0.8, planetSegments);
+  var moonData = constructPlanetData(29.5, 0.01, 2.8, "moon", "img/moon.jpg", 0.4, planetSegments);
+  var marsData = constructPlanetData(360, 0.030, 127.9, "mars", "img/mars.jpg", 0.8, planetSegments);
+  var jupiterData = constructPlanetData(360, 0.030, 178.6, "jupiter", "img/jupiter.jpg", 2.5, planetSegments);
+  var saturnData = constructPlanetData(360, 0.030, 243.5, "saturn", "img/saturn.jpg", 2, planetSegments);
+  var uranusData = constructPlanetData(360, 0.030, 272.5, "uranus", "img/uranus.jpg", 1.25, planetSegments);
+  var neptuneData = constructPlanetData(360, 0.030, 395.5, "neptune", "img/neptune.jpg", 1.2, planetSegments);
+  var plutoData = constructPlanetData(360, 0.030, 506.4, "pluto", "img/pluto.jpg", 0.25, planetSegments);
 
-            case 37: // left
-            case 65: // a
-              moveLeft = true;
-              break;
 
-            case 40: // down
-            case 83: // s
-              moveBackward = true;
-              break;
+  // I guess we need this stuff too
+  var container, HEIGHT,
+      WIDTH, fieldOfView, aspectRatio,
+      nearPlane, farPlane, stats,
+      geometry, particleCount,
+      i, h, color, size,
+      materials = [],
+      mouseX = 0,
+      mouseY = 0,
+      windowHalfX, windowHalfY, cameraZ,
+      fogHex, fogDensity, parameters = {},
+      parameterCount, particles;
 
-            case 39: // right
-            case 68: // d
-              moveRight = true;
-              break;
-          }
-        };
 
-        var onKeyUp = function (event) {
-          switch (event.keyCode) {
-            case 38: // up
-            case 87: // w
-              moveForward = false;
-              break;
+  var Pos = new THREE.Vector3(0, 0, 200);
 
-            case 37: // left
-            case 65: // a
-              moveLeft = false;
-              break;
+  var Dir = new THREE.Vector3(0, 0, 1);
+  var ratio = window.innerWidth / window.innerHeight;
 
-            case 40: // down
-            case 83: // s
-              moveBackward = false;
-              break;
+//////////CONTROLS VARIABLES///////
+  var moveForward = false;
+  var moveBackward = false;
+  var moveLeft = false;
+  var moveRight = false;
 
-            case 39: // right
-            case 68: // d
-              moveRight = false;
-              break;
-          }
-        };
+///////////Random stars array///////////////
+  var stars = [];
 
-        document.addEventListener("keydown", onKeyDown, false);
-        document.addEventListener("keyup", onKeyUp, false);
+  var prevTime = performance.now();
+  var velocity = new THREE.Vector3();
+  var direction = new THREE.Vector3();
+  var color = new THREE.Color();
 
-        var geometry = new THREE.BoxGeometry(10000, 10000, 10000);
-        var cubeMaterials = [
-          new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load("images/sky_ft.png"),
-            side: THREE.DoubleSide,
-          }),
-          new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load("images/sky_bk.png"),
-            side: THREE.DoubleSide,
-          }),
-          new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load("images/sky_up.png"),
-            side: THREE.DoubleSide,
-          }),
-          new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load("images/sky_dn.png"),
-            side: THREE.DoubleSide,
-          }),
-          new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load("images/sky_rt.png"),
-            side: THREE.DoubleSide,
-          }),
-          new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load("images/sky_lf.png"),
-            side: THREE.DoubleSide,
-          }),
-        ];
+  const clock = new THREE.Clock();
+  var speed = 1234;
+  var angle = 0;
 
-        addSphere();
 
-        var material = new THREE.MeshFaceMaterial(cubeMaterials);
-        var cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
+  var orbitData = {value: 200, runOrbit: true, runRotation: true};
 
-        // Create controls that allows a user to move the scene with a mouse.
 
-        // Create light from the sun.
-        pointLight = getPointLight(1.5, "rgb(255, 220, 180)");
-        scene.add(pointLight);
 
-        // Create light that is viewable from all directions.
-        var ambientLight = new THREE.AmbientLight(0xaaaaaa);
-        scene.add(ambientLight);
+  /**
+   * This eliminates the redundance of having to type property names for a planet object.
+   * @param {type} myOrbitRate decimal
+   * @param {type} myRotationRate decimal
+   * @param {type} myDistanceFromAxis decimal
+   * @param {type} myName string
+   * @param {type} myTexture image file path
+   * @param {type} mySize decimal
+   * @param {type} mySegments integer
+   * @returns {constructPlanetData.mainAnonym$0}
+   */
+function constructPlanetData(myOrbitRate, myRotationRate, myDistanceFromAxis, myName, myTexture, mySize, mySegments) {
+    return {
+        orbitRate: myOrbitRate
+        , rotationRate: myRotationRate
+        , distanceFromAxis: myDistanceFromAxis
+        , name: myName
+        , texture: myTexture
+        , size: mySize
+        , segments: mySegments
+    };
+}
 
-        // Create the sun.
-        var sunMaterial = getMaterial("basic", "rgb(255, 255, 255)");
-        sun = getSphere(sunMaterial, 16, 48);
-        scene.add(sun);
+/**
+ * create a visible ring and add it to the scene.
+ * @param {type} size decimal
+ * @param {type} innerDiameter decimal
+ * @param {type} facets integer
+ * @param {type} myColor HTML color
+ * @param {type} name string
+ * @param {type} distanceFromAxis decimal
+ * @returns {THREE.Mesh|myRing}
+ */
+function getRing(size, innerDiameter, facets, myColor, name, distanceFromAxis) {
+    var ring1Geometry = new THREE.RingGeometry(size, innerDiameter, facets);
+    var ring1Material = new THREE.MeshBasicMaterial({color: myColor, side: THREE.DoubleSide});
+    var myRing = new THREE.Mesh(ring1Geometry, ring1Material);
+    myRing.name = name;
+    myRing.position.set(distanceFromAxis, 0, 0);
+    myRing.rotation.x = Math.PI / 2;
+    scene.add(myRing);
+    return myRing;
+}
 
-        // Create the glow of the sun.
-        var spriteMaterial = new THREE.SpriteMaterial({
-          map: new THREE.ImageUtils.loadTexture("solar_system/img/glow.png"),
-          useScreenCoordinates: false,
-          color: 0xffffee,
-          transparent: false,
-          blending: THREE.AdditiveBlending,
-        });
-        var sprite = new THREE.Sprite(spriteMaterial);
-        sprite.scale.set(70, 70, 1.0);
-        sun.add(sprite); // This centers the glow at the sun.
+/**
+ * Used to create a three dimensional ring. This takes more processing power to
+ * run that getRing(). So use this sparingly, such as for the outermost ring of
+ * Saturn.
+ * @param {type} size decimal
+ * @param {type} innerDiameter decimal
+ * @param {type} facets integer
+ * @param {type} myColor HTML color
+ * @param {type} name string
+ * @param {type} distanceFromAxis decimal
+ * @returns {THREE.Mesh|myRing}
+ */
+function getTube(size, innerDiameter, facets, myColor, name, distanceFromAxis) {
+    var ringGeometry = new THREE.TorusGeometry(size, innerDiameter, facets, facets);
+    var ringMaterial = new THREE.MeshBasicMaterial({color: myColor, side: THREE.DoubleSide});
+    myRing = new THREE.Mesh(ringGeometry, ringMaterial);
+    myRing.name = name;
+    myRing.position.set(distanceFromAxis, 0, 0);
+    myRing.rotation.x = Math.PI / 2;
+    scene.add(myRing);
+    return myRing;
+}
 
-        //Create the planets before the Earth
-        venus = loadTexturedPlanet(venusData, venusData.distanceFromAxis, 0, 0);
-        mercury = loadTexturedPlanet(
-          mercuryData,
-          mercuryData.distanceFromAxis,
-          0,
-          0
-        );
+/**
+ * Simplifies the creation of materials used for visible objects.
+ * @param {type} type
+ * @param {type} color
+ * @param {type} myTexture
+ * @returns {THREE.MeshStandardMaterial|THREE.MeshLambertMaterial|THREE.MeshPhongMaterial|THREE.MeshBasicMaterial}
+ */
+function getMaterial(type, color, myTexture) {
+    var materialOptions = {
+        color: color === undefined ? 'rgb(255, 255, 255)' : color,
+        map: myTexture === undefined ? null : myTexture
+    };
 
-        // Create the Earth, the Moon, and a ring around the earth.
-        earth = loadTexturedPlanet(earthData, earthData.distanceFromAxis, 0, 0);
-        moon = loadTexturedPlanet(moonData, moonData.distanceFromAxis, 0, 0);
-        ring = getTube(
-          1.8,
-          0.05,
-          480,
-          0x757064,
-          "ring",
-          earthData.distanceFromAxis
-        );
+    switch (type) {
+        case 'basic':
+            return new THREE.MeshBasicMaterial(materialOptions);
+        case 'lambert':
+            return new THREE.MeshLambertMaterial(materialOptions);
+        case 'phong':
+            return new THREE.MeshPhongMaterial(materialOptions);
+        case 'standard':
+            return new THREE.MeshStandardMaterial(materialOptions);
+        default:
+            return new THREE.MeshBasicMaterial(materialOptions);
+    }
+}
 
-        // Create the visible orbit that the Earth uses.
-        createVisibleOrbits();
+/**
+ *  Draws all of the orbits to be shown in the scene.
+ * @returns {undefined}
+ */
+function createVisibleOrbits() {
+    var orbitWidth = 0.01;
 
-        //Create planets after eart.
-        mars = loadTexturedPlanet(marsData, marsData.distanceFromAxis, 0, 0);
-        jupiter = loadTexturedPlanet(
-          jupiterData,
-          jupiterData.distanceFromAxis,
-          0,
-          0
-        );
-        saturn = loadTexturedPlanet(
-          saturnData,
-          saturnData.distanceFromAxis,
-          0,
-          0
-        );
-        uranus = loadTexturedPlanet(
-          uranusData,
-          uranusData.distanceFromAxis,
-          0,
-          0
-        );
-        neptune = loadTexturedPlanet(
-          neptuneData,
-          neptuneData.distanceFromAxis,
-          0,
-          0
-        );
-        pluto = loadTexturedPlanet(plutoData, plutoData.distanceFromAxis, 0, 0);
+  mercury = getRing(mercuryData.distanceFromAxis + orbitWidth
+      , mercuryData.distanceFromAxis - orbitWidth
+      , 1000
+      , 0xffffff
+      , "mercuryOrbit"
+      , 0);
 
-        // Create the GUI that displays controls.
-        var gui = new dat.GUI();
-        var folder1 = gui.addFolder("light");
-        folder1.add(pointLight, "intensity", 0, 10);
-        var folder2 = gui.addFolder("speed");
-        folder2.add(orbitData, "value", 0, 500);
-        folder2.add(orbitData, "runOrbit", 0, 1);
-        folder2.add(orbitData, "runRotation", 0, 1);
+  venus = getRing(venusData.distanceFromAxis + orbitWidth
+      , venusData.distanceFromAxis - orbitWidth
+      , 1000
+      , 0xffffff
+      , "venusOrbit"
+      , 0);
 
-        // Start the animation.
+    earthOrbit = getRing(earthData.distanceFromAxis + orbitWidth
+        , earthData.distanceFromAxis - orbitWidth
+        , 1000
+        , 0xffffff
+        , "earthOrbit"
+        , 0);
 
-        renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+    marsOrbit = getRing(marsData.distanceFromAxis + orbitWidth,
+    marsData.distanceFromAxis - orbitWidth,
+    1000,
+    0xffffff,
+    "marsOrbit",
+    0);
 
-        window.addEventListener("resize", onWindowResize, false);
-        update(renderer, scene, camera, controls);
-        animate();
+    jupiterOrbit = getRing(jupiterData.distanceFromAxis + orbitWidth,
+    jupiterData.distanceFromAxis - orbitWidth,
+    1000,
+    0xffffff,
+    "jupiterOrbit",
+    0);
+
+    saturnOrbit = getRing(saturnData.distanceFromAxis + orbitWidth,
+    saturnData.distanceFromAxis - orbitWidth,
+    1000,
+    0xffffff,
+    "saturnOrbit",
+    0);
+
+    uranusOrbit = getRing(uranusData.distanceFromAxis + orbitWidth,
+    uranusData.distanceFromAxis - orbitWidth,
+    1000,
+    0xffffff,
+    "uranusOrbit",
+    0);
+
+    neptuneOrbit = getRing(neptuneData.distanceFromAxis + orbitWidth,
+    neptuneData.distanceFromAxis - orbitWidth,
+    1000,
+    0xffffff,
+    "neptuneOrbit",
+    0);
+
+    plutoOrbit = getRing(plutoData.distanceFromAxis + orbitWidth,
+    plutoData.distanceFromAxis - orbitWidth,
+    1000,
+    0xffffff,
+    "plutoOrbit",
+    0);
+}
+
+
+/**
+ * Simplifies the creation of a sphere.
+ * @param {type} material THREE.SOME_TYPE_OF_CONSTRUCTED_MATERIAL
+ * @param {type} size decimal
+ * @param {type} segments integer
+ * @returns {getSphere.obj|THREE.Mesh}
+ */
+function getSphere(material, size, segments) {
+    var geometry = new THREE.SphereGeometry(size, segments, segments);
+    var obj = new THREE.Mesh(geometry, material);
+    obj.castShadow = true;
+
+    return obj;
+}
+
+/**
+ * Creates a planet and adds it to the scene.
+ * @param {type} myData data for a planet object
+ * @param {type} x integer
+ * @param {type} y integer
+ * @param {type} z integer
+ * @param {type} myMaterialType string that is passed to getMaterial()
+ * @returns {getSphere.obj|THREE.Mesh|loadTexturedPlanet.myPlanet}
+ */
+function loadTexturedPlanet(myData, x, y, z, myMaterialType) {
+    var myMaterial;
+    var passThisTexture;
+    var passThisBump
+
+    if (myData.texture && myData.texture !== "") {
+        passThisTexture = new THREE.ImageUtils.loadTexture(myData.texture);
+    }
+    if (myMaterialType) {
+        myMaterial = getMaterial(myMaterialType, "rgb(255, 255, 255 )", passThisTexture);
+    } else {
+        myMaterial = getMaterial("lambert", "rgb(255, 255, 255 )", passThisTexture);
+    }
+
+    myMaterial.receiveShadow = true;
+    myMaterial.castShadow = true;
+    var myPlanet = getSphere(myMaterial, myData.size, myData.segments);
+    myPlanet.receiveShadow = true;
+    myPlanet.name = myData.name;
+    scene.add(myPlanet);
+    myPlanet.position.set(x, y, z);
+
+    return myPlanet;
+}
+
+/**
+ * Simplifies creating a light that disperses in all directions.
+ * @param {type} intensity decimal
+ * @param {type} color HTML color
+ * @returns {THREE.PointLight|getPointLight.light}
+ */
+function getPointLight(intensity, color) {
+    var light = new THREE.PointLight(color, intensity);
+    light.castShadow = true;
+
+    light.shadow.bias = 0.001;
+    light.shadow.mapSize.width = 2048;
+    light.shadow.mapSize.height = 2048;
+    return light;
+}
+
+/**
+ * Move the planet around its orbit, and rotate it.
+ * @param {type} myPlanet
+ * @param {type} myData
+ * @param {type} myTime
+ * @param {type} stopRotation optional set to true for rings
+ * @returns {undefined}
+ */
+function movePlanet(myPlanet, myData, myTime, stopRotation) {
+    if (orbitData.runRotation && !stopRotation) {
+        myPlanet.rotation.y += myData.rotationRate;
+    }
+    if (orbitData.runOrbit) {
+        myPlanet.position.x = Math.cos(myTime
+                * (1.0 / (myData.orbitRate * orbitData.value)) + 10.0)
+                * myData.distanceFromAxis;
+        myPlanet.position.z = Math.sin(myTime
+                * (1.0 / (myData.orbitRate * orbitData.value)) + 10.0)
+                * myData.distanceFromAxis;
+    }
+}
+
+/**
+ * Move the moon around its orbit with the planet, and rotate it.
+ * @param {type} myMoon
+ * @param {type} myPlanet
+ * @param {type} myData
+ * @param {type} myTime
+ * @returns {undefined}
+ */
+function moveMoon(myMoon, myPlanet, myData, myTime) {
+    movePlanet(myMoon, myData, myTime);
+    if (orbitData.runOrbit) {
+        myMoon.position.x = myMoon.position.x + myPlanet.position.x;
+        myMoon.position.z = myMoon.position.z + myPlanet.position.z;
+    }
+}
+
+/**
+ * This function is called in a loop to create animation.
+ * @param {type} renderer
+ * @param {type} scene
+ * @param {type} camera
+
+ * @returns {undefined}
+ */
+function update(renderer, scene, camera) {
+    pointLight.position.copy(sun.position);
+    //controls.update();
+
+    var time = Date.now();
+
+    movePlanet(earth, earthData, time, true);
+    //movePlanet(ring, earthData, time, true);
+    moveMoon(moon, earth, moonData, time);
+
+    movePlanet(mars, marsData, time, true);
+    //movePlanet(venus, venusData, time, true);
+    //movePlanet(mercury, mercuryData, time, true);
+    movePlanet(jupiter, jupiterData, time, true);
+    movePlanet(uranus, uranusData, time, true);
+    movePlanet(saturn, saturnData, time, true);
+    movePlanet(pluto, plutoData, time, true);
+    movePlanet(neptune, neptuneData, time, true);
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(function () {
+        update(renderer, scene, camera);
+    });
+}
+
+/**
+ * This is the function that starts everything.
+ * @returns {THREE.Scene|scene}
+ */
+
+ //////////////////CONTROL VARIABLES///////////////////////
+
+ var controlsEnabled = true;
+
+			var moveForward = false;
+			var moveBackward = false;
+			var moveLeft = false;
+			var moveRight = false;
+
+			var prevTime = performance.now();
+			var velocity = new THREE.Vector3();
+			var direction = new THREE.Vector3();
+			var color = new THREE.Color();
+
+
+
+  init();
+  animate();
+
+  function init() {
+
+      HEIGHT = window.innerHeight;
+      WIDTH = window.innerWidth;
+      windowHalfX = WIDTH / 2;
+      windowHalfY = HEIGHT / 2;
+
+      fieldOfView = 75;
+      aspectRatio = WIDTH / HEIGHT;
+      nearPlane = 1;
+      farPlane = 900;
+
+      /* 	fieldOfView — Camera frustum vertical field of view.
+aspectRatio — Camera frustum aspect ratio.
+nearPlane — Camera frustum near plane.
+farPlane — Camera frustum far plane.
+
+- https://threejs.org/docs/#Reference/Cameras/PerspectiveCamera
+
+In geometry, a frustum (plural: frusta or frustums)
+is the portion of a solid (normally a cone or pyramid)
+that lies between two parallel planes cutting it. - wikipedia.		*/
+
+      cameraZ = farPlane / 3; /*	So, 1000? Yes! move on!	*/
+      fogHex = 0x000000; /* As black as your heart.	*/
+      fogDensity = 0.0007; /* So not terribly dense?	*/
+
+      camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
+      camera.position.z = cameraZ;
+      //camera.position.x = cameraX;
+
+      scene = new THREE.Scene();
+
+  //////////////////////CONTROLS/////////////////////////////////
+      controls = new THREE.PointerLockControls( camera );
+
+      scene.fog = new THREE.FogExp2(fogHex, fogDensity);
+
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      document.body.style.margin = 0;
+      document.body.style.overflow = 'hidden';
+
+      geometry = new THREE.Geometry(); /*	NO ONE SAID ANYTHING ABOUT MATH! UGH!	*/
+
+      particleCount = 200; /* Leagues under the sea */
+
+      /*	Hope you took your motion sickness pills;
+We're about to get loopy.	*/
+
+      for (i = 0; i < particleCount; i++) {
+
+          var vertex = new THREE.Vector3();
+          vertex.x = Math.random() * 2000 - 1000;
+          vertex.y = Math.random() * 2000 - 1000;
+          vertex.z = Math.random() * 2000 - 1000;
+
+          geometry.vertices.push(vertex);
       }
 
-      function animateStars() {
-        // looping through each star
-        for (var i = 0; i < stars.length; i++) {
-          star = stars[i];
+      /*	We can't stop here, this is bat country!	*/
 
-          // moving forward
-          star.position.z += i / 10;
+      parameters = [
+          [
+              [1, 1, 0.5], 5
+          ],
+          [
+              [0.95, 1, 0.5], 4
+          ],
+          [
+              [0.90, 1, 0.5], 3
+          ],
+          [
+              [0.85, 1, 0.5], 2
+          ],
+          [
+              [0.80, 1, 0.5], 1
+          ]
+      ];
+      parameterCount = parameters.length;
 
-          //if a partical is too close move it to the back
-          if (star.position.z > 1000) star.position.z -= 2000;
-        }
-      }
+      /*	I told you to take those motion sickness pills.
+Clean that vommit up, we're going again!	*/
 
-      function addSphere() {
-        //adding random spherical particles
-        //loop to go through z positions between -1000 to 1000, adding particles
-        for (var z = -1000; z < 1000; z += 3) {
-          //making a sphere
-          var geometry = new THREE.SphereGeometry(0.5, 32, 32);
-          var material = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
+      for (i = 0; i < parameterCount; i++) {
+
+          color = parameters[i][0];
+          size = parameters[i][1];
+
+          materials[i] = new THREE.PointCloudMaterial({
+              size: size
           });
 
-          var customMaterial = new THREE.ShaderMaterial({
-            uniforms: {},
-            vertexShader: document.getElementById("vertexShader").textContent,
-            fragmentShader: document.getElementById("fragmentShader")
-              .textContent,
-            side: THREE.BackSide,
-            blending: THREE.AdditiveBlending,
-            transparent: true,
-          });
+          particles = new THREE.PointCloud(geometry, materials[i]);
 
-          var sphere = new THREE.Mesh(geometry, material);
+          particles.rotation.x = Math.random() * 6;
+          particles.rotation.y = Math.random() * 6;
+          particles.rotation.z = Math.random() * 6;
 
-          //giving spheres random x and y positions between -500 and 500
-          sphere.position.x = Math.random() * 1000 - 400;
-          sphere.position.y = Math.random() * 1000 - 400;
+          scene.add(particles);
+      }
 
-          //setting the z position to where it is in the camera view.
-          sphere.position.z = z;
+      /*	If my calculations are correct, when this baby hits 88 miles per hour...
+you're gonna see some serious shit.	*/
 
-          //scale it up
-          sphere.scale.x = sphere.scale.y = 1.5;
+      renderer = new THREE.WebGLRenderer(); /*	Rendererererers particles.	*/
+      renderer.setPixelRatio(window.devicePixelRatio); /*	Probably 1; unless you're fancy.	*/
+      renderer.setSize(WIDTH, HEIGHT); /*	Full screen baby Wooooo!	*/
 
-          //add sphere to the scene
-          scene.add(sphere);
+      container.appendChild(renderer.domElement); /* Let's add all this crazy junk to the page.	*/
 
-          //pushing the sphere to the stars array
-          stars.push(sphere);
+      //background wallpaper//
+      var starSphere	= THREEx.Planets.createStarfield()
+	    scene.add(starSphere)
+
+      // Create light from the sun.
+    pointLight = getPointLight(1.5, "rgb(255, 220, 180)");
+    scene.add(pointLight);
+
+    // Create light that is viewable from all directions.
+    var ambientLight = new THREE.AmbientLight(0xaaaaaa);
+    scene.add(ambientLight);
+
+    // Create the sun.
+    var sunMaterial = getMaterial("basic", "rgb(255, 255, 255)");
+    sun = getSphere(sunMaterial, 16, 48);
+    scene.add(sun);
+
+    // Create the glow of the sun.
+    var spriteMaterial = new THREE.SpriteMaterial(
+            {
+                map: new THREE.ImageUtils.loadTexture("img/glow.png")
+                , useScreenCoordinates: false
+                , color: 0xffffee
+                , transparent: false
+                , blending: THREE.AdditiveBlending
+            });
+    var sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(70, 70, 1.0);
+    sun.add(sprite); // This centers the glow at the sun.
+
+    //Create the planets before the Earth
+    venus = loadTexturedPlanet(venusData, venusData.distanceFromAxis, 0, 0);
+    mercury = loadTexturedPlanet(mercuryData, mercuryData.distanceFromAxis, 0, 0);
+
+
+    // Create the Earth, the Moon, and a ring around the earth.
+    earth = loadTexturedPlanet(earthData, earthData.distanceFromAxis, 0, 0);
+    moon = loadTexturedPlanet(moonData, moonData.distanceFromAxis, 0, 0);
+    //ring = getTube(1.8, 0.05, 480, 0x757064, "ring", earthData.distanceFromAxis);
+
+    // Create the visible orbit that the Earth uses.
+    createVisibleOrbits();
+
+    //Create planets after eart.
+    mars = loadTexturedPlanet(marsData, marsData.distanceFromAxis, 0, 0);
+    jupiter = loadTexturedPlanet(jupiterData, jupiterData.distanceFromAxis, 0, 0);
+    saturn = loadTexturedPlanet(saturnData, saturnData.distanceFromAxis, 0, 0);
+    uranus = loadTexturedPlanet(uranusData, uranusData.distanceFromAxis, 0, 0);
+    neptune = loadTexturedPlanet(neptuneData, neptuneData.distanceFromAxis, 0, 0);
+    pluto = loadTexturedPlanet(plutoData, plutoData.distanceFromAxis, 0, 0);
+
+
+    // Create the GUI that displays controls.
+    var gui = new dat.GUI();
+    var folder1 = gui.addFolder('light');
+    folder1.add(pointLight, 'intensity', 0, 10);
+    var folder2 = gui.addFolder('speed');
+    folder2.add(orbitData, 'value', 0, 500);
+    folder2.add(orbitData, 'runOrbit', 0, 1);
+    folder2.add(orbitData, 'runRotation', 0, 1);
+
+    // Start the animation.
+    update(renderer, scene, camera)
+
+      /*	I don't know about you, but I like to know how bad my
+  code is wrecking the performance of a user's machine.
+  Let's see some damn stats!	*/
+
+      stats = new Stats();
+      stats.domElement.style.position = 'absolute';
+      stats.domElement.style.top = '0px';
+      stats.domElement.style.right = '0px';
+      container.appendChild(stats.domElement);
+
+      /* Event Listeners */
+
+      window.addEventListener('resize', onWindowResize, false);
+      document.addEventListener('mousemove', onDocumentMouseMove, false);
+      document.addEventListener('touchstart', onDocumentTouchStart, false);
+      document.addEventListener('touchmove', onDocumentTouchMove, false);
+
+
+      controls.enabled = true;
+      scene.add( controls.getObject() );
+
+      var onKeyDown = function ( event ) {
+
+        switch ( event.keyCode ) {
+
+          case 38: // up
+          case 87: // w
+            moveForward = true;
+            break;
+
+          case 37: // left
+          case 65: // a
+            moveLeft = true;
+            break;
+
+          case 40: // down
+          case 83: // s
+            moveBackward = true;
+            break;
+
+          case 39: // right
+          case 68: // d
+            moveRight = true;
+            break;
+
         }
-      }
 
-      function render() {
-        //get the frame
-        requestAnimationFrame(render);
-        //render the scene and animate the stars
-        renderer.render(scene, camera);
-        // animateStars();
-      }
+      };
 
-      function onWindowResize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      }
+      var onKeyUp = function ( event ) {
 
-      function animate() {
-        requestAnimationFrame(animate);
+        switch( event.keyCode ) {
 
-        if (controlsEnabled == true) {
-          var time = performance.now();
-          var delta = (time - prevTime) / 1000;
+          case 38: // up
+          case 87: // w
+            moveForward = false;
+            break;
+
+          case 37: // left
+          case 65: // a
+            moveLeft = false;
+            break;
+
+          case 40: // down
+          case 83: // s
+            moveBackward = false;
+            break;
+
+          case 39: // right
+          case 68: // d
+            moveRight = false;
+            break;
+
+        }
+      };
+
+      document.addEventListener( 'keydown', onKeyDown, false );
+      document.addEventListener( 'keyup', onKeyUp, false );
+
+
+  }
+
+  function animate() {
+      requestAnimationFrame(animate);
+
+      if ( controlsEnabled == true ) {
+
+         var time = performance.now();
+          var delta =  ( time - prevTime ) / 1000;
 
           velocity.x -= velocity.x * 10.0 * delta;
           velocity.z -= velocity.z * 10.0 * delta;
 
-          direction.z = Number(moveForward) - Number(moveBackward);
-          direction.x = Number(moveLeft) - Number(moveRight);
+          direction.z = Number( moveForward ) - Number( moveBackward );
+          direction.x = Number( moveLeft ) - Number( moveRight );
           direction.normalize();
 
-          console.log("x", direction.x, "z", direction.z);
+          if ( moveForward || moveBackward ) velocity.z -= direction.z * 400.0 * delta;
+          if ( moveLeft || moveRight ) velocity.x -= direction.x * 400.0 * delta;
 
-          if (moveForward || moveBackward)
-            velocity.z -= direction.z * 400.0 * delta;
-          if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
-
-          controls.getObject().translateX(velocity.x * delta);
-          controls.getObject().translateZ(velocity.z * delta);
+          controls.getObject().translateX( velocity.x * delta );
+          controls.getObject().translateZ( velocity.z * delta );
 
           prevTime = time;
-        }
-        renderer.render(scene, camera);
-      }
 
-      /**
-       * This eliminates the redundance of having to type property names for a planet object.
-       * @param {type} myOrbitRate decimal
-       * @param {type} myRotationRate decimal
-       * @param {type} myDistanceFromAxis decimal
-       * @param {type} myName string
-       * @param {type} myTexture image file path
-       * @param {type} mySize decimal
-       * @param {type} mySegments integer
-       * @returns {constructPlanetData.mainAnonym$0}
-       */
-      function constructPlanetData(
-        myOrbitRate,
-        myRotationRate,
-        myDistanceFromAxis,
-        myName,
-        myTexture,
-        mySize,
-        mySegments
-      ) {
-        return {
-          orbitRate: myOrbitRate,
-          rotationRate: myRotationRate,
-          distanceFromAxis: myDistanceFromAxis,
-          name: myName,
-          texture: myTexture,
-          size: mySize,
-          segments: mySegments,
-        };
-      }
-
-      /**
-       * create a visible ring and add it to the scene.
-       * @param {type} size decimal
-       * @param {type} innerDiameter decimal
-       * @param {type} facets integer
-       * @param {type} myColor HTML color
-       * @param {type} name string
-       * @param {type} distanceFromAxis decimal
-       * @returns {THREE.Mesh|myRing}
-       */
-      function getRing(
-        size,
-        innerDiameter,
-        facets,
-        myColor,
-        name,
-        distanceFromAxis
-      ) {
-        var ring1Geometry = new THREE.RingGeometry(size, innerDiameter, facets);
-        var ring1Material = new THREE.MeshBasicMaterial({
-          color: myColor,
-          side: THREE.DoubleSide,
-        });
-        var myRing = new THREE.Mesh(ring1Geometry, ring1Material);
-        myRing.name = name;
-        myRing.position.set(distanceFromAxis, 0, 0);
-        myRing.rotation.x = Math.PI / 2;
-        scene.add(myRing);
-        return myRing;
-      }
-
-      /**
-       * Used to create a three dimensional ring. This takes more processing power to
-       * run that getRing(). So use this sparingly, such as for the outermost ring of
-       * Saturn.
-       * @param {type} size decimal
-       * @param {type} innerDiameter decimal
-       * @param {type} facets integer
-       * @param {type} myColor HTML color
-       * @param {type} name string
-       * @param {type} distanceFromAxis decimal
-       * @returns {THREE.Mesh|myRing}
-       */
-      function getTube(
-        size,
-        innerDiameter,
-        facets,
-        myColor,
-        name,
-        distanceFromAxis
-      ) {
-        var ringGeometry = new THREE.TorusGeometry(
-          size,
-          innerDiameter,
-          facets,
-          facets
-        );
-        var ringMaterial = new THREE.MeshBasicMaterial({
-          color: myColor,
-          side: THREE.DoubleSide,
-        });
-        myRing = new THREE.Mesh(ringGeometry, ringMaterial);
-        myRing.name = name;
-        myRing.position.set(distanceFromAxis, 0, 0);
-        myRing.rotation.x = Math.PI / 2;
-        scene.add(myRing);
-        return myRing;
-      }
-
-      /**
-       * Simplifies the creation of materials used for visible objects.
-       * @param {type} type
-       * @param {type} color
-       * @param {type} myTexture
-       * @returns {THREE.MeshStandardMaterial|THREE.MeshLambertMaterial|THREE.MeshPhongMaterial|THREE.MeshBasicMaterial}
-       */
-      function getMaterial(type, color, myTexture) {
-        var materialOptions = {
-          color: color === undefined ? "rgb(255, 255, 255)" : color,
-          map: myTexture === undefined ? null : myTexture,
-        };
-
-        switch (type) {
-          case "basic":
-            return new THREE.MeshBasicMaterial(materialOptions);
-          case "lambert":
-            return new THREE.MeshLambertMaterial(materialOptions);
-          case "phong":
-            return new THREE.MeshPhongMaterial(materialOptions);
-          case "standard":
-            return new THREE.MeshStandardMaterial(materialOptions);
-          default:
-            return new THREE.MeshBasicMaterial(materialOptions);
-        }
-      }
-
-      /**
-       *  Draws all of the orbits to be shown in the scene.
-       * @returns {undefined}
-       */
-      function createVisibleOrbits() {
-        var orbitWidth = 0.01;
-
-        mercury = getRing(
-          mercuryData.distanceFromAxis + orbitWidth,
-          mercuryData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "earthOrbit",
-          0
-        );
-
-        venus = getRing(
-          venusData.distanceFromAxis + orbitWidth,
-          venusData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "earthOrbit",
-          0
-        );
-
-        earthOrbit = getRing(
-          earthData.distanceFromAxis + orbitWidth,
-          earthData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "earthOrbit",
-          0
-        );
-
-        marsOrbit = getRing(
-          marsData.distanceFromAxis + orbitWidth,
-          marsData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "marsOrbit",
-          0
-        );
-
-        jupiterOrbit = getRing(
-          jupiterData.distanceFromAxis + orbitWidth,
-          jupiterData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "jupiterOrbit",
-          0
-        );
-
-        saturnOrbit = getRing(
-          saturnData.distanceFromAxis + orbitWidth,
-          saturnData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "saturnOrbit",
-          0
-        );
-
-        uranusOrbit = getRing(
-          uranusData.distanceFromAxis + orbitWidth,
-          uranusData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "uranusOrbit",
-          0
-        );
-
-        neptuneOrbit = getRing(
-          neptuneData.distanceFromAxis + orbitWidth,
-          neptuneData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "neptuneOrbit",
-          0
-        );
-
-        plutoOrbit = getRing(
-          plutoData.distanceFromAxis + orbitWidth,
-          plutoData.distanceFromAxis - orbitWidth,
-          1000,
-          0xffffff,
-          "plutoOrbit",
-          0
-        );
-      }
-
-      /**
-       * Simplifies the creation of a sphere.
-       * @param {type} material THREE.SOME_TYPE_OF_CONSTRUCTED_MATERIAL
-       * @param {type} size decimal
-       * @param {type} segments integer
-       * @returns {getSphere.obj|THREE.Mesh}
-       */
-      function getSphere(material, size, segments) {
-        var geometry = new THREE.SphereGeometry(size, segments, segments);
-        var obj = new THREE.Mesh(geometry, material);
-        obj.castShadow = true;
-
-        return obj;
-      }
-
-      /**
-       * Creates a planet and adds it to the scene.
-       * @param {type} myData data for a planet object
-       * @param {type} x integer
-       * @param {type} y integer
-       * @param {type} z integer
-       * @param {type} myMaterialType string that is passed to getMaterial()
-       * @returns {getSphere.obj|THREE.Mesh|loadTexturedPlanet.myPlanet}
-       */
-      function loadTexturedPlanet(myData, x, y, z, myMaterialType) {
-        var myMaterial;
-        var passThisTexture;
-
-        if (myData.texture && myData.texture !== "") {
-          passThisTexture = new THREE.ImageUtils.loadTexture(myData.texture);
-        }
-        if (myMaterialType) {
-          myMaterial = getMaterial(
-            myMaterialType,
-            "rgb(255, 255, 255 )",
-            passThisTexture
-          );
-        } else {
-          myMaterial = getMaterial(
-            "lambert",
-            "rgb(255, 255, 255 )",
-            passThisTexture
-          );
         }
 
-        myMaterial.receiveShadow = true;
-        myMaterial.castShadow = true;
-        var myPlanet = getSphere(myMaterial, myData.size, myData.segments);
-        myPlanet.receiveShadow = true;
-        myPlanet.name = myData.name;
-        scene.add(myPlanet);
-        myPlanet.position.set(x, y, z);
 
-        return myPlanet;
+
+      render();
+      stats.update();
+  }
+
+  function render() {
+      var time = Date.now() * 0.00005;
+
+      camera.position.x += (mouseX - camera.position.x) * 0.05;
+      camera.position.y += (-mouseY - camera.position.y) * 0.05;
+
+      camera.lookAt(scene.position);
+
+      for (i = 0; i < scene.children.length; i++) {
+
+          var object = scene.children[i];
+
+          if (object instanceof THREE.PointCloud) {
+
+              object.rotation.y = time * (i < 4 ? i + 1 : -(i + 1));
+          }
       }
 
-      /**
-       * Simplifies creating a light that disperses in all directions.
-       * @param {type} intensity decimal
-       * @param {type} color HTML color
-       * @returns {THREE.PointLight|getPointLight.light}
-       */
-      function getPointLight(intensity, color) {
-        var light = new THREE.PointLight(color, intensity);
-        light.castShadow = true;
+      for (i = 0; i < materials.length; i++) {
 
-        light.shadow.bias = 0.001;
-        light.shadow.mapSize.width = 2048;
-        light.shadow.mapSize.height = 2048;
-        return light;
+          color = parameters[i][0];
+
+          h = (360 * (color[0] + time) % 360) / 360;
+          materials[i].color.setHSL(h, color[1], color[2]);
       }
 
-      /**
-       * Move the planet around its orbit, and rotate it.
-       * @param {type} myPlanet
-       * @param {type} myData
-       * @param {type} myTime
-       * @param {type} stopRotation optional set to true for rings
-       * @returns {undefined}
-       */
-      function movePlanet(myPlanet, myData, myTime, stopRotation) {
-        if (orbitData.runRotation && !stopRotation) {
-          myPlanet.rotation.y += myData.rotationRate;
-        }
-        if (orbitData.runOrbit) {
-          myPlanet.position.x =
-            Math.cos(
-              myTime * (1.0 / (myData.orbitRate * orbitData.value)) + 10.0
-            ) * myData.distanceFromAxis;
-          myPlanet.position.z =
-            Math.sin(
-              myTime * (1.0 / (myData.orbitRate * orbitData.value)) + 10.0
-            ) * myData.distanceFromAxis;
-        }
+      renderer.render(scene, camera);
+  }
+
+  function onDocumentMouseMove(e) {
+      mouseX = e.clientX - windowHalfX;
+      mouseY = e.clientY - windowHalfY;
+  }
+
+  /*	Mobile users?  I got your back homey	*/
+
+  function onDocumentTouchStart(e) {
+
+      if (e.touches.length === 1) {
+
+          e.preventDefault();
+          mouseX = e.touches[0].pageX - windowHalfX;
+          mouseY = e.touches[0].pageY - windowHalfY;
       }
+  }
 
-      /**
-       * Move the moon around its orbit with the planet, and rotate it.
-       * @param {type} myMoon
-       * @param {type} myPlanet
-       * @param {type} myData
-       * @param {type} myTime
-       * @returns {undefined}
-       */
-      function moveMoon(myMoon, myPlanet, myData, myTime) {
-        movePlanet(myMoon, myData, myTime);
-        if (orbitData.runOrbit) {
-          myMoon.position.x = myMoon.position.x + myPlanet.position.x;
-          myMoon.position.z = myMoon.position.z + myPlanet.position.z;
-        }
+  function onDocumentTouchMove(e) {
+
+      if (e.touches.length === 1) {
+
+          e.preventDefault();
+          mouseX = e.touches[0].pageX - windowHalfX;
+          mouseY = e.touches[0].pageY - windowHalfY;
       }
+  }
 
-      /**
-       * This function is called in a loop to create animation.
-       * @param {type} renderer
-       * @param {type} scene
-       * @param {type} camera
-       * @param {type} controls
-       * @returns {undefined}
-       */
-      function update(renderer, scene, camera, controls) {
-        pointLight.position.copy(sun.position);
-        // controls.update();
+  function onWindowResize() {
 
-        var time = Date.now();
+      windowHalfX = window.innerWidth / 2;
+      windowHalfY = window.innerHeight / 2;
 
-        movePlanet(earth, earthData, time);
-        movePlanet(ring, earthData, time, true);
-        moveMoon(moon, earth, moonData, time);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+  }
 
-        renderer.render(scene, camera);
-        requestAnimationFrame(function () {
-          update(renderer, scene, camera, controls);
-        });
-      }
+  var listener = new THREE.AudioListener();
+camera.add( listener );
 
-      init();
+// create a global audio source
+var sound = new THREE.Audio( listener );
+
+// load a sound and set it as the Audio object's buffer
+var audioLoader = new THREE.AudioLoader();
+audioLoader.load( 'Audio/Roof-Gold-Teeth.mp3', function( buffer ) {
+	sound.setBuffer( buffer );
+	sound.setLoop( true );
+	sound.setVolume( 0.5 );
+	sound.play();
+});
+
+function touchStarted() {
+  getAudioContext().resume();
+}
+
+
     </script>
-  </body>
 </html>
