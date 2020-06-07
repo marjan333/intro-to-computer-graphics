@@ -13,6 +13,7 @@
 
         <script src="js/three.js"></script>
         <script src='js/PointerLockControls.js'></script>
+        <script src="js/OrbitControls.js"></script>
 
         <script src='js/threex.planets.js'></script>
         <script src="js/dat.gui.min.js"></script>
@@ -31,16 +32,16 @@
 
 
   var planetSegments = 48;
-  var mercuryData = constructPlanetData(100, 0.030, 40, "mercury", "img/mercury.jpg", "img/mercurybump.jpg", 0.2, planetSegments);
-  var venusData = constructPlanetData(150, 0.030, 55, "venus", "img/venus.jpg", "img/venusbump.jpg",  0.5, planetSegments);
-  var earthData = constructPlanetData(365.2564, 0.015, 65, "earth", "img/earthmap1k.jpg", "img/earthbump1k.jpg",  0.8, planetSegments);
-  var moonData = constructPlanetData(29.5, 0.01, 2.8, "moon", "img/moon.jpg", "img/moonbump1k.jpg", 0.4, planetSegments);
-  var marsData = constructPlanetData(185.5, 0.030, 75, "mars", "img/mars.jpg", "img/marsbump1k.jpg", 0.8, planetSegments);
-  var jupiterData = constructPlanetData(550, 0.030, 85, "jupiter", "img/jupiter.jpg", "img/jupiterbump.jpg",  2.5, planetSegments);
-  var saturnData = constructPlanetData(450, 0.030, 95, "saturn", "img/saturn.jpg", "", 2, planetSegments);
-  var uranusData = constructPlanetData(400, 0.030, 105, "uranus", "img/uranus.jpg", "",  1.25, planetSegments);
-  var neptuneData = constructPlanetData(410, 0.030, 115, "neptune", "img/neptune.jpg", "",  1.2, planetSegments);
-  var plutoData = constructPlanetData(20, 0.030, 135, "pluto", "img/pluto.jpg", "img/plutobump1k.jpg", 0.25, planetSegments);
+  var mercuryData = constructPlanetData(100, 0.030, 40, "mercury", "img/mercury.jpg", "img/mercurybump.jpg", 0.4, planetSegments);
+  var venusData = constructPlanetData(150, 0.030, 55, "venus", "img/venus.jpg", "img/venusbump.jpg",  0.8, planetSegments);
+  var earthData = constructPlanetData(365.2564, 0.015, 65, "earth", "img/earthmap1k.jpg", "img/earthbump1k.jpg",  1.0, planetSegments);
+  var moonData = constructPlanetData(29.5, 0.01, 2.8, "moon", "img/moon.jpg", "img/moonbump1k.jpg", 0.5, planetSegments);
+  var marsData = constructPlanetData(185.5, 0.030, 75, "mars", "img/mars.jpg", "img/marsbump1k.jpg", 0.9, planetSegments);
+  var jupiterData = constructPlanetData(550, 0.030, 85, "jupiter", "img/jupiter.jpg", "img/jupiterbump.jpg",  2.7, planetSegments);
+  var saturnData = constructPlanetData(450, 0.030, 95, "saturn", "img/saturn.jpg", "", 2.3, planetSegments);
+  var uranusData = constructPlanetData(400, 0.030, 105, "uranus", "img/uranus.jpg", "",  1.35, planetSegments);
+  var neptuneData = constructPlanetData(410, 0.030, 115, "neptune", "img/neptune.jpg", "",  1.3, planetSegments);
+  var plutoData = constructPlanetData(20, 0.030, 135, "pluto", "img/pluto.jpg", "img/plutobump1k.jpg", 0.4, planetSegments);
 
 
   // I guess we need this stuff too
@@ -145,7 +146,8 @@ function getRing(size, innerDiameter, facets, myColor, name, distanceFromAxis) {
 function getTube(size, innerDiameter, facets, myColor, name, distanceFromAxis) {
     var ringGeometry = new THREE.TorusGeometry(size, innerDiameter, facets, facets);
     var ringMaterial = new THREE.MeshBasicMaterial({color: myColor, side: THREE.DoubleSide});
-    myRing = new THREE.Mesh(ringGeometry, ringMaterial);
+    var texture = new THREE.ImageUtils.loadTexture("img/saturnringcolor.jpg")
+    myRing = new THREE.Mesh(ringGeometry, ringMaterial, texture);
     myRing.name = name;
     myRing.position.set(distanceFromAxis, 0, 0);
     myRing.rotation.x = Math.PI / 2;
@@ -382,9 +384,15 @@ function update(renderer, scene, camera) {
     movePlanet(mars, marsData, time, true);
     //movePlanet(venus, venusData, time, true);
     //movePlanet(mercury, mercuryData, time, true);
-    movePlanet(jupiter, jupiterData, time, true);
+    movePlanet(jupiter, jupiterData, time);
+    //movePlanet(ring, jupiterData, time, true);
+
     movePlanet(uranus, uranusData, time, true);
+    movePlanet(ring1, uranusData, time, true);
+
     movePlanet(saturn, saturnData, time, true);
+    movePlanet(ring, saturnData, time, true);
+
     movePlanet(pluto, plutoData, time, true);
     movePlanet(neptune, neptuneData, time, true);
 
@@ -454,7 +462,7 @@ that lies between two parallel planes cutting it. - wikipedia.		*/
 
   //////////////////////CONTROLS/////////////////////////////////
       controls = new THREE.PointerLockControls( camera );
-      //controls.minDistance = 1.12; controls.maxDistance = 10;
+      //controls.minDistance = 1.12;
 
 
       scene.fog = new THREE.FogExp2(fogHex, fogDensity);
@@ -579,7 +587,11 @@ you're gonna see some serious shit.	*/
     mars = loadTexturedPlanet(marsData, marsData.distanceFromAxis, 0, 0);
     jupiter = loadTexturedPlanet(jupiterData, jupiterData.distanceFromAxis, 0, 0);
     saturn = loadTexturedPlanet(saturnData, saturnData.distanceFromAxis, 0, 0);
+    ring = getTube(3.5, 0.05, 480, 0x757064, "ring", saturnData.distanceFromAxis);
+
     uranus = loadTexturedPlanet(uranusData, uranusData.distanceFromAxis, 0, 0);
+    ring1 = getTube(1.8, 0.05, 480, 0x757064, "ring1", uranusData.distanceFromAxis);
+
     neptune = loadTexturedPlanet(neptuneData, neptuneData.distanceFromAxis, 0, 0);
     pluto = loadTexturedPlanet(plutoData, plutoData.distanceFromAxis, 0, 0);
 
@@ -774,6 +786,28 @@ you're gonna see some serious shit.	*/
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
   }
+
+  ///////////////////////////////////////// sound/audio //////////////////////////////////////////////
+
+    // create an AudioListener and add it to the camera
+    var listener = new THREE.AudioListener();
+    camera.add( listener );
+
+    // create a global audio source
+    var sound = new THREE.Audio( listener );
+
+    // load a sound and set it as the Audio object's buffer
+    var audioLoader = new THREE.AudioLoader();
+    audioLoader.load( 'Audio/Roof-Gold-Teeth.mp3', function( buffer ) {
+    	sound.setBuffer( buffer );
+    	sound.setLoop( true );
+    	sound.setVolume( 0.5 );
+    	sound.play();
+    });
+
+    function touchStarted() {
+      getAudioContext().resume();
+    }
 
 
     </script>
