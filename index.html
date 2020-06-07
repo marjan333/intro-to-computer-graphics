@@ -31,16 +31,16 @@
 
 
   var planetSegments = 48;
-  var mercuryData = constructPlanetData(360, 0.030, 37.9, "mercury", "img/mercury.jpg", 0.2, planetSegments);
-  var venusData = constructPlanetData(360, 0.030, 48.2, "venus", "img/venus.jpg", 0.5, planetSegments);
-  var earthData = constructPlanetData(365.2564, 0.015, 55.6, "earth", "img/earth.jpg", 0.8, planetSegments);
-  var moonData = constructPlanetData(29.5, 0.01, 2.8, "moon", "img/moon.jpg", 0.4, planetSegments);
-  var marsData = constructPlanetData(360, 0.030, 67.9, "mars", "img/mars.jpg", 0.8, planetSegments);
-  var jupiterData = constructPlanetData(360, 0.030, 78.6, "jupiter", "img/jupiter.jpg", 2.5, planetSegments);
-  var saturnData = constructPlanetData(360, 0.030, 84.5, "saturn", "img/saturn.jpg", 2, planetSegments);
-  var uranusData = constructPlanetData(360, 0.030, 95.5, "uranus", "img/uranus.jpg", 1.25, planetSegments);
-  var neptuneData = constructPlanetData(360, 0.030, 100.5, "neptune", "img/neptune.jpg", 1.2, planetSegments);
-  var plutoData = constructPlanetData(360, 0.030, 120.4, "pluto", "img/pluto.jpg", 0.25, planetSegments);
+  var mercuryData = constructPlanetData(100, 0.030, 40, "mercury", "img/mercury.jpg", "img/mercurybump.jpg", 0.2, planetSegments);
+  var venusData = constructPlanetData(150, 0.030, 55, "venus", "img/venus.jpg", "img/venusbump.jpg",  0.5, planetSegments);
+  var earthData = constructPlanetData(365.2564, 0.015, 65, "earth", "img/earthmap1k.jpg", "img/earthbump1k.jpg",  0.8, planetSegments);
+  var moonData = constructPlanetData(29.5, 0.01, 2.8, "moon", "img/moon.jpg", "img/moonbump1k.jpg", 0.4, planetSegments);
+  var marsData = constructPlanetData(185.5, 0.030, 75, "mars", "img/mars.jpg", "img/marsbump1k.jpg", 0.8, planetSegments);
+  var jupiterData = constructPlanetData(550, 0.030, 85, "jupiter", "img/jupiter.jpg", "img/jupiterbump.jpg",  2.5, planetSegments);
+  var saturnData = constructPlanetData(450, 0.030, 95, "saturn", "img/saturn.jpg", "", 2, planetSegments);
+  var uranusData = constructPlanetData(400, 0.030, 105, "uranus", "img/uranus.jpg", "",  1.25, planetSegments);
+  var neptuneData = constructPlanetData(410, 0.030, 115, "neptune", "img/neptune.jpg", "",  1.2, planetSegments);
+  var plutoData = constructPlanetData(20, 0.030, 135, "pluto", "img/pluto.jpg", "img/plutobump1k.jpg", 0.25, planetSegments);
 
 
   // I guess we need this stuff too
@@ -96,13 +96,14 @@
    * @param {type} mySegments integer
    * @returns {constructPlanetData.mainAnonym$0}
    */
-function constructPlanetData(myOrbitRate, myRotationRate, myDistanceFromAxis, myName, myTexture, mySize, mySegments) {
+function constructPlanetData(myOrbitRate, myRotationRate, myDistanceFromAxis, myName, myTexture, myBumpMap, mySize, mySegments) {
     return {
         orbitRate: myOrbitRate
         , rotationRate: myRotationRate
         , distanceFromAxis: myDistanceFromAxis
         , name: myName
         , texture: myTexture
+        , bumpMap: myBumpMap
         , size: mySize
         , segments: mySegments
     };
@@ -159,10 +160,11 @@ function getTube(size, innerDiameter, facets, myColor, name, distanceFromAxis) {
  * @param {type} myTexture
  * @returns {THREE.MeshStandardMaterial|THREE.MeshLambertMaterial|THREE.MeshPhongMaterial|THREE.MeshBasicMaterial}
  */
-function getMaterial(type, color, myTexture) {
+function getMaterial(type, color, myTexture, myBumpMap) {
     var materialOptions = {
         color: color === undefined ? 'rgb(255, 255, 255)' : color,
-        map: myTexture === undefined ? null : myTexture
+        map: myTexture === undefined ? null : myTexture,
+        bumpMap: myBumpMap === undefined ? null : myBumpMap
     };
 
     switch (type) {
@@ -193,7 +195,7 @@ function createVisibleOrbits() {
       , "mercuryOrbit"
       , 0);
 
-  venus = getRing(venusData.distanceFromAxis + orbitWidth
+    venus = getRing(venusData.distanceFromAxis + orbitWidth
       , venusData.distanceFromAxis - orbitWidth
       , 1000
       , 0xffffff
@@ -282,12 +284,17 @@ function loadTexturedPlanet(myData, x, y, z, myMaterialType) {
 
     if (myData.texture && myData.texture !== "") {
         passThisTexture = new THREE.ImageUtils.loadTexture(myData.texture);
+        passThisBump = new THREE.ImageUtils.loadTexture(myData.texture);
     }
     if (myMaterialType) {
         myMaterial = getMaterial(myMaterialType, "rgb(255, 255, 255 )", passThisTexture);
     } else {
         myMaterial = getMaterial("lambert", "rgb(255, 255, 255 )", passThisTexture);
     }
+
+    // if (myData.bumpMap && mayData.bumpMap !== ""){
+    //   passThisBump = new THREE.ImageUtils.loadTexture(myData.bumpMap);
+    // }
 
     myMaterial.receiveShadow = true;
     myMaterial.castShadow = true;
@@ -396,6 +403,7 @@ function update(renderer, scene, camera) {
 
  var controlsEnabled = true;
 
+
 			var moveForward = false;
 			var moveBackward = false;
 			var moveLeft = false;
@@ -446,6 +454,8 @@ that lies between two parallel planes cutting it. - wikipedia.		*/
 
   //////////////////////CONTROLS/////////////////////////////////
       controls = new THREE.PointerLockControls( camera );
+      //controls.minDistance = 1.12; controls.maxDistance = 10;
+
 
       scene.fog = new THREE.FogExp2(fogHex, fogDensity);
 
@@ -456,7 +466,7 @@ that lies between two parallel planes cutting it. - wikipedia.		*/
 
       geometry = new THREE.Geometry(); /*	NO ONE SAID ANYTHING ABOUT MATH! UGH!	*/
 
-      particleCount = 200; /* Leagues under the sea */
+      particleCount = 500; /* Leagues under the sea */
 
       /*	Hope you took your motion sickness pills;
 We're about to get loopy.	*/
@@ -764,25 +774,6 @@ you're gonna see some serious shit.	*/
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
   }
-
-  var listener = new THREE.AudioListener();
-camera.add( listener );
-
-// create a global audio source
-var sound = new THREE.Audio( listener );
-
-// load a sound and set it as the Audio object's buffer
-var audioLoader = new THREE.AudioLoader();
-audioLoader.load( 'Audio/Roof-Gold-Teeth.mp3', function( buffer ) {
-	sound.setBuffer( buffer );
-	sound.setLoop( true );
-	sound.setVolume( 0.5 );
-	sound.play();
-});
-
-function touchStarted() {
-  getAudioContext().resume();
-}
 
 
     </script>
