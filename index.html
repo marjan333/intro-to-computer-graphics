@@ -13,6 +13,7 @@
 
     <script src="js/three.js"></script>
     <script src="js/PointerLockControls.js"></script>
+    <script src="js/OrbitControls.js"></script>
 
     <script src="js/threex.planets.js"></script>
     <script src="js/dat.gui.min.js"></script>
@@ -26,7 +27,6 @@
     // setting up all the needed variables
     var scene,
       camera,
-      camera2,
       renderer,
       pointLight,
       sun,
@@ -51,7 +51,7 @@
       "mercury",
       "img/mercury.jpg",
       "img/mercurybump.jpg",
-      0.2,
+      0.4,
       planetSegments
     );
     var venusData = constructPlanetData(
@@ -61,7 +61,7 @@
       "venus",
       "img/venus.jpg",
       "img/venusbump.jpg",
-      0.5,
+      0.8,
       planetSegments
     );
     var earthData = constructPlanetData(
@@ -71,7 +71,7 @@
       "earth",
       "img/earthmap1k.jpg",
       "img/earthbump1k.jpg",
-      0.8,
+      1.0,
       planetSegments
     );
     var moonData = constructPlanetData(
@@ -81,7 +81,7 @@
       "moon",
       "img/moon.jpg",
       "img/moonbump1k.jpg",
-      0.4,
+      0.5,
       planetSegments
     );
     var marsData = constructPlanetData(
@@ -91,7 +91,7 @@
       "mars",
       "img/mars.jpg",
       "img/marsbump1k.jpg",
-      0.8,
+      0.9,
       planetSegments
     );
     var jupiterData = constructPlanetData(
@@ -101,7 +101,7 @@
       "jupiter",
       "img/jupiter.jpg",
       "img/jupiterbump.jpg",
-      2.5,
+      2.7,
       planetSegments
     );
     var saturnData = constructPlanetData(
@@ -111,7 +111,7 @@
       "saturn",
       "img/saturn.jpg",
       "",
-      2,
+      2.3,
       planetSegments
     );
     var uranusData = constructPlanetData(
@@ -121,7 +121,7 @@
       "uranus",
       "img/uranus.jpg",
       "",
-      1.25,
+      1.35,
       planetSegments
     );
     var neptuneData = constructPlanetData(
@@ -131,7 +131,7 @@
       "neptune",
       "img/neptune.jpg",
       "",
-      1.2,
+      1.3,
       planetSegments
     );
     var plutoData = constructPlanetData(
@@ -141,7 +141,7 @@
       "pluto",
       "img/pluto.jpg",
       "img/plutobump1k.jpg",
-      0.25,
+      0.4,
       planetSegments
     );
 
@@ -208,7 +208,7 @@
         uranus: false,
         neptune: false,
         pluto: false,
-        solar_system:true, 
+        solar_system: true,
       },
     };
 
@@ -644,13 +644,13 @@
     }
 
     /**
-     * This function is called in a loop to create animation.
-     * @param {type} renderer
-     * @param {type} scene
-     * @param {type} camera
+ * This function is called in a loop to create animation.
+ * @param {type} renderer
+ * @param {type} scene
+ * @param {type} camera
 
-     * @returns {undefined}
-     */
+ * @returns {undefined}
+ */
     function update(renderer, scene, camera) {
       pointLight.position.copy(sun.position);
       //controls.update();
@@ -659,17 +659,20 @@
 
       movePlanet(earth, earthData, time, true);
       //movePlanet(ring, earthData, time, true);
-      movePlanet(venus, venusData, time, true);
-      movePlanet(mercury, mercuryData, time, true);
-
-
       moveMoon(moon, earth, moonData, time);
 
       movePlanet(mars, marsData, time, true);
+      //movePlanet(venus, venusData, time, true);
+      //movePlanet(mercury, mercuryData, time, true);
+      movePlanet(jupiter, jupiterData, time);
+      //movePlanet(ring, jupiterData, time, true);
 
-      movePlanet(jupiter, jupiterData, time, true);
       movePlanet(uranus, uranusData, time, true);
+      movePlanet(ring1, uranusData, time, true);
+
       movePlanet(saturn, saturnData, time, true);
+      movePlanet(ring, saturnData, time, true);
+
       movePlanet(pluto, plutoData, time, true);
       movePlanet(neptune, neptuneData, time, true);
 
@@ -742,7 +745,7 @@
       scene = new THREE.Scene();
 
       //////////////////////CONTROLS/////////////////////////////////
-    //    controls = new THREE.PointerLockControls(camera);
+      //    controls = new THREE.PointerLockControls(camera);
       //controls.minDistance = 1.12; controls.maxDistance = 10;
 
       scene.fog = new THREE.FogExp2(fogHex, fogDensity);
@@ -1093,6 +1096,28 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    ///////////////////////////////////////// sound/audio //////////////////////////////////////////////
+
+    // create an AudioListener and add it to the camera
+    var listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    // create a global audio source
+    var sound = new THREE.Audio(listener);
+
+    // load a sound and set it as the Audio object's buffer
+    var audioLoader = new THREE.AudioLoader();
+    audioLoader.load("Audio/Roof-Gold-Teeth.mp3", function (buffer) {
+      sound.setBuffer(buffer);
+      sound.setLoop(true);
+      sound.setVolume(0.5);
+      sound.play();
+    });
+
+    function touchStarted() {
+      getAudioContext().resume();
     }
   </script>
 </html>
