@@ -25,157 +25,41 @@
     // - https://threejs.org/docs/#Manual/Introduction/Creating_a_scene
 
     // setting up all the needed variables
-    var scene,
-      camera,
-      renderer,
-      pointLight,
-      sun,
-      moon,
-      earth,
-      mars,
-      jupiter,
-      mercury,
-      neptune,
-      pluto,
-      saturn,
-      uranus,
-      venus,
-      earthOrbit,
-      ring;
+    // setting up all the needed variables
+  var scene, camera, renderer, pointLight, sun, moon, earth, mars, jupiter, mercury, neptune, pluto, saturn, uranus, venus, earthOrbit, ring;
 
-    var planetSegments = 48;
-    var mercuryData = constructPlanetData(
-      100,
-      0.03,
-      40,
-      "mercury",
-      "img/mercury.jpg",
-      "img/mercurybump.jpg",
-      0.4,
-      planetSegments
-    );
-    var venusData = constructPlanetData(
-      150,
-      0.03,
-      55,
-      "venus",
-      "img/venus.jpg",
-      "img/venusbump.jpg",
-      0.8,
-      planetSegments
-    );
-    var earthData = constructPlanetData(
-      365.2564,
-      0.015,
-      65,
-      "earth",
-      "img/earthmap1k.jpg",
-      "img/earthbump1k.jpg",
-      1.0,
-      planetSegments
-    );
-    var moonData = constructPlanetData(
-      29.5,
-      0.01,
-      2.8,
-      "moon",
-      "img/moon.jpg",
-      "img/moonbump1k.jpg",
-      0.5,
-      planetSegments
-    );
-    var marsData = constructPlanetData(
-      185.5,
-      0.03,
-      75,
-      "mars",
-      "img/mars.jpg",
-      "img/marsbump1k.jpg",
-      0.9,
-      planetSegments
-    );
-    var jupiterData = constructPlanetData(
-      550,
-      0.03,
-      85,
-      "jupiter",
-      "img/jupiter.jpg",
-      "img/jupiterbump.jpg",
-      2.7,
-      planetSegments
-    );
-    var saturnData = constructPlanetData(
-      450,
-      0.03,
-      95,
-      "saturn",
-      "img/saturn.jpg",
-      "",
-      2.3,
-      planetSegments
-    );
-    var uranusData = constructPlanetData(
-      400,
-      0.03,
-      105,
-      "uranus",
-      "img/uranus.jpg",
-      "",
-      1.35,
-      planetSegments
-    );
-    var neptuneData = constructPlanetData(
-      410,
-      0.03,
-      115,
-      "neptune",
-      "img/neptune.jpg",
-      "",
-      1.3,
-      planetSegments
-    );
-    var plutoData = constructPlanetData(
-      20,
-      0.03,
-      135,
-      "pluto",
-      "img/pluto.jpg",
-      "img/plutobump1k.jpg",
-      0.4,
-      planetSegments
-    );
 
-    // I guess we need this stuff too
-    var container,
-      HEIGHT,
-      WIDTH,
-      fieldOfView,
-      aspectRatio,
-      nearPlane,
-      farPlane,
-      stats,
-      geometry,
-      particleCount,
-      i,
-      h,
-      color,
-      size,
-      materials = [],
-      mouseX = 0,
-      mouseY = 0,
-      windowHalfX,
-      windowHalfY,
-      cameraZ,
-      fogHex,
-      fogDensity,
-      parameters = {},
-      parameterCount,
-      particles;
+var planetSegments = 48;
+var mercuryData = constructPlanetData(100, 0.030, 40, "mercury", "img/mercury.jpg", "img/mercurybump.jpg", 0.4, planetSegments);
+var venusData = constructPlanetData(150, 0.030, 55, "venus", "img/venus.jpg", "img/venusbump.jpg",  0.8, planetSegments);
+var earthData = constructPlanetData(365.2564, 0.015, 65, "earth", "img/earthmap1k.jpg", "img/earthbump1k.jpg",  1.0, planetSegments);
+var moonData = constructPlanetData(29.5, 0.01, 2.8, "moon", "img/moon.jpg", "img/moonbump1k.jpg", 0.5, planetSegments);
+var marsData = constructPlanetData(185.5, 0.030, 75, "mars", "img/mars.jpg", "img/marsbump1k.jpg", 0.9, planetSegments);
+var jupiterData = constructPlanetData(550, 0.030, 85, "jupiter", "img/jupiter.jpg", "img/jupiterbump.jpg",  2.7, planetSegments);
+var saturnData = constructPlanetData(450, 0.030, 95, "saturn", "img/saturn.jpg", "", 2.3, planetSegments);
+var uranusData = constructPlanetData(400, 0.030, 105, "uranus", "img/uranus.jpg", "",  1.35, planetSegments);
+var neptuneData = constructPlanetData(410, 0.030, 115, "neptune", "img/neptune.jpg", "",  1.3, planetSegments);
+var plutoData = constructPlanetData(20, 0.030, 135, "pluto", "img/pluto.jpg", "img/plutobump1k.jpg", 0.4, planetSegments);
 
-    var Pos = new THREE.Vector3(0, 0, 200);
 
-    var Dir = new THREE.Vector3(0, 0, 1);
-    var ratio = window.innerWidth / window.innerHeight;
+// I guess we need this stuff too
+var container, HEIGHT,
+    WIDTH, fieldOfView, aspectRatio,
+    nearPlane, farPlane, stats,
+    geometry, particleCount,
+    i, h, color, size,
+    materials = [],
+    mouseX = 0,
+    mouseY = 0,
+    windowHalfX, windowHalfY, cameraZ,
+    fogHex, fogDensity, parameters = {},
+    parameterCount, particles;
+
+
+var Pos = new THREE.Vector3(0, 0, 200);
+
+var Dir = new THREE.Vector3(0, 0, 1);
+var ratio = window.innerWidth / window.innerHeight;
 
     //////////CONTROLS VARIABLES///////
     var moveForward = false;
@@ -223,27 +107,18 @@
      * @param {type} mySegments integer
      * @returns {constructPlanetData.mainAnonym$0}
      */
-    function constructPlanetData(
-      myOrbitRate,
-      myRotationRate,
-      myDistanceFromAxis,
-      myName,
-      myTexture,
-      myBumpMap,
-      mySize,
-      mySegments
-    ) {
-      return {
-        orbitRate: myOrbitRate,
-        rotationRate: myRotationRate,
-        distanceFromAxis: myDistanceFromAxis,
-        name: myName,
-        texture: myTexture,
-        bumpMap: myBumpMap,
-        size: mySize,
-        segments: mySegments,
-      };
-    }
+     function constructPlanetData(myOrbitRate, myRotationRate, myDistanceFromAxis, myName, myTexture, myBumpMap, mySize, mySegments) {
+    return {
+        orbitRate: myOrbitRate
+        , rotationRate: myRotationRate
+        , distanceFromAxis: myDistanceFromAxis
+        , name: myName
+        , texture: myTexture
+        , bumpMap: myBumpMap
+        , size: mySize
+        , segments: mySegments
+    };
+}
 
     /**
      * create a visible ring and add it to the scene.
@@ -648,7 +523,6 @@
  * @param {type} renderer
  * @param {type} scene
  * @param {type} camera
-
  * @returns {undefined}
  */
     function update(renderer, scene, camera) {
@@ -662,16 +536,16 @@
       moveMoon(moon, earth, moonData, time);
 
       movePlanet(mars, marsData, time, true);
-      //movePlanet(venus, venusData, time, true);
-      //movePlanet(mercury, mercuryData, time, true);
+      movePlanet(venus, venusData, time, true);
+      movePlanet(mercury, mercuryData, time, true);
       movePlanet(jupiter, jupiterData, time);
       //movePlanet(ring, jupiterData, time, true);
 
       movePlanet(uranus, uranusData, time, true);
-      movePlanet(ring1, uranusData, time, true);
+      //movePlanet(ring1, uranusData, time, true);
 
       movePlanet(saturn, saturnData, time, true);
-      movePlanet(ring, saturnData, time, true);
+      //movePlanet(ring, saturnData, time, true);
 
       movePlanet(pluto, plutoData, time, true);
       movePlanet(neptune, neptuneData, time, true);
@@ -721,9 +595,7 @@
     aspectRatio — Camera frustum aspect ratio.
     nearPlane — Camera frustum near plane.
     farPlane — Camera frustum far plane.
-
     - https://threejs.org/docs/#Reference/Cameras/PerspectiveCamera
-
     In geometry, a frustum (plural: frusta or frustums)
     is the portion of a solid (normally a cone or pyramid)
     that lies between two parallel planes cutting it. - wikipedia.		*/
@@ -742,10 +614,15 @@
       camera.updateProjectionMatrix();
       //camera.position.x = cameraX;
 
+      controls = new THREE.OrbitControls(camera);
+      controls.maxDistance = 300;
+      controls.minDistance = 30;
+    
+
       scene = new THREE.Scene();
 
       //////////////////////CONTROLS/////////////////////////////////
-      //    controls = new THREE.PointerLockControls(camera);
+      //controls = new THREE.PointerLockControls(camera);
       //controls.minDistance = 1.12; controls.maxDistance = 10;
 
       scene.fog = new THREE.FogExp2(fogHex, fogDensity);
@@ -757,7 +634,7 @@
 
       geometry = new THREE.Geometry(); /*	NO ONE SAID ANYTHING ABOUT MATH! UGH!	*/
 
-      particleCount = 500; /* Leagues under the sea */
+      particleCount = 2000; /* Leagues under the sea */
 
       /*	Hope you took your motion sickness pills;
     We're about to get loopy.	*/
@@ -844,24 +721,21 @@
       sprite.scale.set(70, 70, 1.0);
       sun.add(sprite); // This centers the glow at the sun.
 
-      //Create the planets before the Earth
-
-      mercury = loadTexturedPlanet(
-        mercuryData,
-        mercuryData.distanceFromAxis,
-        0,
-        0
-      );
-
-      venus = loadTexturedPlanet(venusData, venusData.distanceFromAxis, 0, 0);
-
+      
       // Create the Earth, the Moon, and a ring around the earth.
       earth = loadTexturedPlanet(earthData, earthData.distanceFromAxis, 0, 0);
       moon = loadTexturedPlanet(moonData, moonData.distanceFromAxis, 0, 0);
       //ring = getTube(1.8, 0.05, 480, 0x757064, "ring", earthData.distanceFromAxis);
 
+
       // Create the visible orbit that the Earth uses.
       createVisibleOrbits();
+
+      //Create the planets before the Earth
+
+      mercury = loadTexturedPlanet(mercuryData,mercuryData.distanceFromAxis,0,0);
+
+      venus = loadTexturedPlanet(venusData, venusData.distanceFromAxis, 0, 0);
 
       //Create planets after eart.
       mars = loadTexturedPlanet(marsData, marsData.distanceFromAxis, 0, 0);
@@ -943,6 +817,8 @@
       /*	I don't know about you, but I like to know how bad my
       code is wrecking the performance of a user's machine.
       Let's see some damn stats!	*/
+
+      ////////////////////////////////////////////////////seems to cut off code from here //////////////////////////////////////////////////////////
 
       stats = new Stats();
       stats.domElement.style.position = "absolute";
@@ -1045,6 +921,9 @@
 
       camera.position.x += (mouseX - camera.position.x) * 0.05;
       camera.position.y += (-mouseY - camera.position.y) * 0.05;
+
+      //camera.target = new THREE.Vector3(scene.position);
+
 
       camera.lookAt(scene.position);
 
