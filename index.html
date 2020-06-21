@@ -46,16 +46,16 @@
   var scene, camera, renderer, pointLight, sun, moon, earth, mars, jupiter, mercury, neptune, pluto, saturn, uranus, venus, earthOrbit, ring;
 
 var planetSegments = 48;
-var mercuryData = constructPlanetData(100, 0.030, 40, "mercury", "img/mercury.jpg", "img/mercurybump.jpg", 0.4, planetSegments);
-var venusData = constructPlanetData(150, 0.030, 55, "venus", "img/venus.jpg", "img/venusbump.jpg",  0.8, planetSegments);
-var earthData = constructPlanetData(365.2564, 0.015, 65, "earth", "img/earthmap1k.jpg", "img/earthbump1k.jpg",  1.0, planetSegments);
-var moonData = constructPlanetData(29.5, 0.01, 2.8, "moon", "img/moon.jpg", "img/moonbump1k.jpg", 0.5, planetSegments);
-var marsData = constructPlanetData(185.5, 0.030, 75, "mars", "img/mars.jpg", "img/marsbump1k.jpg", 0.9, planetSegments);
-var jupiterData = constructPlanetData(550, 0.030, 85, "jupiter", "img/jupiter.jpg", "img/jupiterbump.jpg",  2.7, planetSegments);
-var saturnData = constructPlanetData(450, 0.030, 95, "saturn", "img/saturn.jpg", "", 2.3, planetSegments);
-var uranusData = constructPlanetData(400, 0.030, 105, "uranus", "img/uranus.jpg", "",  1.35, planetSegments);
-var neptuneData = constructPlanetData(410, 0.030, 115, "neptune", "img/neptune.jpg", "",  1.3, planetSegments);
-var plutoData = constructPlanetData(20, 0.030, 135, "pluto", "img/pluto.jpg", "img/plutobump1k.jpg", 0.4, planetSegments);
+var mercuryData = constructPlanetData(100, 0.001, 40, "mercury", "img/mercury.jpg", "img/mercurybump.jpg", 0.4, planetSegments);
+var venusData = constructPlanetData(150, 0.004, 55, "venus", "img/venus.jpg", "img/venusbump.jpg",  0.8, planetSegments);
+var earthData = constructPlanetData(365.2564, 0.002, 65, "earth", "img/earthmap1k.jpg", "img/earthbump1k.jpg",  1.0, planetSegments);
+var moonData = constructPlanetData(29.5, 0.01, 2.8, "moon", "img/moon.jpg", "img/moonbump1k.jpg", 0.2, planetSegments);
+var marsData = constructPlanetData(185.5, 0.005, 75, "mars", "img/mars.jpg", "img/marsbump1k.jpg", 0.9, planetSegments);
+var jupiterData = constructPlanetData(550, 0.020, 85, "jupiter", "img/jupiter.jpg", "img/jupiterbump.jpg",  2.7, planetSegments);
+var saturnData = constructPlanetData(450, 0.003, 95, "saturn", "img/saturn.jpg", "", 2.3, planetSegments);
+var uranusData = constructPlanetData(400, 0.005, 105, "uranus", "img/uranus.jpg", "",  1.35, planetSegments);
+var neptuneData = constructPlanetData(410, 0.004, 115, "neptune", "img/neptune.jpg", "",  1.3, planetSegments);
+var plutoData = constructPlanetData(20, 0.004, 135, "pluto", "img/pluto.jpg", "img/plutobump1k.jpg", 0.4, planetSegments);
 
 
 document.getElementById("currentHeader").innerHTML = "Solar System";
@@ -474,21 +474,21 @@ var ratio = window.innerWidth / window.innerHeight;
 
       var time = Date.now();
 
-      movePlanet(earth, earthData, time, true);
+      movePlanet(earth, earthData, time);
       //movePlanet(ring, earthData, time, true);
       moveMoon(moon, earth, moonData, time);
 
-      movePlanet(mars, marsData, time, true);
-      movePlanet(venus, venusData, time, true);
-      movePlanet(mercury, mercuryData, time, true);
+      movePlanet(mars, marsData, time);
+      movePlanet(venus, venusData, time);
+      movePlanet(mercury, mercuryData, time);
       movePlanet(jupiter, jupiterData, time);
 
       movePlanet(uranus, uranusData, time, true);
       ///movePlanet(ring1, uranusData, time, true);
       movePlanet(saturn, saturnData, time, true);
       //movePlanet(ring, saturnData, time, true);
-      movePlanet(neptune, neptuneData, time, true);
-      movePlanet(pluto, plutoData, time, true);
+      movePlanet(neptune, neptuneData, time);
+      movePlanet(pluto, plutoData, time);
 
       veiwPlanet();
 
